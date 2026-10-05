@@ -7,15 +7,13 @@ author = "Marc Eddy Camara"
 
 [tool.briefcase.app.randomizer]
 formal_name = "Randomizer CAMARA"
-description = "Traitement EXIF et bruit iPhone"
+description = "Test interface iOS"
 icon = "src/randomizer/resources/randomizer"
 sources = [
     "src/randomizer"
 ]
 requires = [
-    "toga-iOS>=0.4.0",
-    "pillow>=9.0.0",
-    "piexif>=1.1.3"
+    "toga-iOS>=0.4.0"
 ]
 test_requires = [
     "pytest",
