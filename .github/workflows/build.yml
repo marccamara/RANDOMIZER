@@ -20,9 +20,10 @@ jobs:
         brew install create-dmg
         pip install --upgrade pip
         pip install briefcase
-
-    - name: Create & Update iOS App Package (Force clean)
-      run: briefcase create ios --update --force --no-input
+    - name: Create iOS App Package
+      run: |
+        rm -rf ios build
+        briefcase create ios --no-input
 
     - name: Build iOS App
       run: briefcase build ios --no-input
