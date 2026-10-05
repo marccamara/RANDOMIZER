@@ -1,3 +1,4 @@
+Ini, TOML
 [tool.briefcase]
 project_name = "Randomizer CAMARA"
 bundle = "org.example"
