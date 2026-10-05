@@ -1,8 +1,10 @@
+Ini, TOML
 [tool.briefcase]
 package_name = "org.example.randomizer"
 project_name = "iPhone Processor"
 bundle = "org.example"
 version = "0.1.0"
+license = "MIT"
 sources = ['src/randomizer']
 requires = [
     "toga>=0.3.0",
