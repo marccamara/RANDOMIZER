@@ -3,6 +3,8 @@ import random
 import json
 import datetime
 import asyncio
+import piexif
+from PIL import Image, ImageOps, ImageEnhance
 
 import toga
 from toga.style import Pack
@@ -16,11 +18,11 @@ class iPhoneImageProcessorApp(toga.App):
 
         # --- En-tête ---
         title_label = toga.Label(
-            '✨ iPhone EXIF & Jitter Generator', 
+            '✨ Randomizer & EXIF Pro', 
             style=Pack(padding=(0, 0, 5, 0), font_weight='bold', font_size=18)
         )
         subtitle_label = toga.Label(
-            'Randomisation et injection EXIF natives', 
+            'Recadrage, Jitter & EXIF iPhone natifs', 
             style=Pack(padding=(0, 0, 20, 0), color='#666666', font_size=12)
         )
 
@@ -93,7 +95,7 @@ class iPhoneImageProcessorApp(toga.App):
         except Exception as e:
             self.label_input.text = f"Erreur de sélection"
 
-    # --- LOGIQUE MÉTIER ---
+    # --- LOGIQUE MÉTIER & ANTI-SPAM ---
     IPHONE_MODELS = [
         {"make": "Apple", "model": "iPhone 11", "software": "16.5", "focal": (26, 1), "fnum": (18, 10)},
         {"make": "Apple", "model": "iPhone 12", "software": "17.1.1", "focal": (26, 1), "fnum": (16, 10)},
@@ -129,7 +131,6 @@ class iPhoneImageProcessorApp(toga.App):
                 return f"IMG_{rand_num}.jpg"
 
     def generate_iphone_exif(self):
-        import piexif  # Import différé
         device = random.choice(self.IPHONE_MODELS)
         now = datetime.datetime.now()
         random_days = random.randint(1, 30)
@@ -138,42 +139,31 @@ class iPhoneImageProcessorApp(toga.App):
         date_str = photo_date.strftime("%Y:%m:%d %H:%M:%S")
 
         zeroth_ifd = {
-            piexif.ImageIFD.Make: device["make"],
-            piexif.ImageIFD.Model: device["model"],
-            piexif.ImageIFD.Software: f"iOS {device['software']}",
+            piexif.ImageIFD.Make: device["make"].encode('utf-8'),
+            piexif.ImageIFD.Model: device["model"].encode('utf-8'),
+            piexif.ImageIFD.Software: f"iOS {device['software']}".encode('utf-8'),
             piexif.ImageIFD.Orientation: 1,
             piexif.ImageIFD.XResolution: (72, 1),
             piexif.ImageIFD.YResolution: (72, 1),
             piexif.ImageIFD.ResolutionUnit: 2,
-            piexif.ImageIFD.DateTime: date_str,
+            piexif.ImageIFD.DateTime: date_str.encode('utf-8'),
         }
 
         exif_ifd = {
-            piexif.ExifIFD.DateTimeOriginal: date_str,
-            piexif.ExifIFD.DateTimeDigitized: date_str,
-            piexif.ExifIFD.OffsetTimeOriginal: "+03:00",
+            piexif.ExifIFD.DateTimeOriginal: date_str.encode('utf-8'),
+            piexif.ExifIFD.DateTimeDigitized: date_str.encode('utf-8'),
+            piexif.ExifIFD.OffsetTimeOriginal: b"+03:00",
             piexif.ExifIFD.ColorSpace: 1,
             piexif.ExifIFD.ExifVersion: b"0232",
             piexif.ExifIFD.ComponentsConfiguration: b"\x01\x02\x03\x00",
             piexif.ExifIFD.FocalLength: device["focal"],
             piexif.ExifIFD.FNumber: device["fnum"],
             piexif.ExifIFD.ISOSpeedRatings: random.choice([50, 64, 80, 100, 125, 160]),
-            piexif.ExifIFD.LensModel: f"{device['model']} back camera 5.96mm f/{device['fnum'][0]/10}",
+            piexif.ExifIFD.LensModel: f"{device['model']} back camera 5.96mm f/{device['fnum'][0]/10}".encode('utf-8'),
         }
 
         exif_dict = {"0th": zeroth_ifd, "Exif": exif_ifd, "1st": {}, "GPS": {}, "Interop": {}}
         return piexif.dump(exif_dict)
-
-    def add_gaussian_noise_and_steganography(self, img, magnitude=2.5):
-        import numpy as np  # Import différé
-        from PIL import Image
-        img_array = np.array(img).astype(np.int16)
-        noise = np.random.normal(0, magnitude, img_array.shape)
-        img_array = img_array + noise
-        random_shifts = np.random.choice([-1, 0, 1], size=img_array.shape, p=[0.1, 0.8, 0.1])
-        img_array = img_array + random_shifts
-        noisy_array = np.clip(img_array, 0, 255).astype(np.uint8)
-        return Image.fromarray(noisy_array)
 
     def dynamic_crop_to_ratio(self, img, target_ratio=(3, 4)):
         orig_w, orig_h = img.size
@@ -196,28 +186,29 @@ class iPhoneImageProcessorApp(toga.App):
         return img.crop((left, top, left + new_w, top + new_h))
 
     def process_single_image(self, img, output_path, target_width=1080):
-        from PIL import Image, ImageEnhance  # Import différé
+        # 1. Micro-Flip optionel (15% de chance)
         if random.random() < 0.15:
             img = ImageOps.mirror(img)
 
+        # 2. Recadrage dynamique au format 3:4 (pour atteindre 1080x1440)
         img_cropped = self.dynamic_crop_to_ratio(img, target_ratio=(3, 4))
         target_height = int(target_width * (4 / 3))
         img_resized = img_cropped.resize((target_width, target_height), Image.Resampling.LANCZOS)
 
-        clean_img = Image.new(img_resized.mode, img_resized.size)
-        clean_img.putdata(list(img_resized.getdata()))
-
+        # 3. Micro-rotation anti-pHash (-0.5° à +0.5°)
         angle = random.uniform(-0.5, 0.5)
-        clean_img = clean_img.rotate(angle, resample=Image.BICUBIC, expand=False)
+        img_rotated = img_resized.rotate(angle, resample=Image.BICUBIC, expand=False)
 
-        clean_img = ImageEnhance.Brightness(clean_img).enhance(random.uniform(0.97, 1.03))
-        clean_img = ImageEnhance.Contrast(clean_img).enhance(random.uniform(0.97, 1.03))
-        clean_img = ImageEnhance.Color(clean_img).enhance(random.uniform(0.98, 1.02))
+        # 4. Légères variations colorimétriques invisibles pour casser la signature binaire
+        img_rotated = ImageEnhance.Brightness(img_rotated).enhance(random.uniform(0.97, 1.03))
+        img_rotated = ImageEnhance.Contrast(img_rotated).enhance(random.uniform(0.97, 1.03))
+        img_rotated = ImageEnhance.Color(img_rotated).enhance(random.uniform(0.98, 1.02))
 
-        clean_img = self.add_gaussian_noise_and_steganography(clean_img, magnitude=random.uniform(1.8, 3.2))
+        # 5. Sauvegarde en JPEG avec qualité variable (génère des tailles de fichiers uniques en Ko)
+        # et injection directe des métadonnées EXIF iPhone
         exif_bytes = self.generate_iphone_exif()
-
-        clean_img.save(
+        
+        img_rotated.save(
             output_path,
             format="JPEG",
             quality=random.randint(92, 96),
@@ -238,8 +229,7 @@ class iPhoneImageProcessorApp(toga.App):
         self.btn_input.enabled = True
 
     def run_processing_logic(self, input_folder, output_base_folder, num_folders):
-        from PIL import Image, ImageOps  # Import différé
-        valid_extensions = ('.jpg', '.jpeg', '.png', '.webp', '.heic')
+        valid_extensions = ('.jpg', '.jpeg', '.png', '.webp')
         input_files = [f for f in os.listdir(input_folder) if f.lower().endswith(valid_extensions)]
         
         if not input_files:
@@ -278,7 +268,7 @@ class iPhoneImageProcessorApp(toga.App):
         self.status_label.text = "✓ Traitement terminé avec succès !"
 
 def main():
-    return iPhoneImageProcessorApp('iPhone Processor', 'org.example.iphoneprocessor')
+    return iPhoneImageProcessorApp('Randomizer CAMARA', 'org.example.randomizer')
 
 if __name__ == '__main__':
     main().main_loop()
