@@ -14,7 +14,6 @@ sources = [
 ]
 requires = [
     "toga-iOS>=0.4.0",
-    "numpy>=1.22.0",
     "pillow>=9.0.0",
     "piexif>=1.1.3"
 ]
