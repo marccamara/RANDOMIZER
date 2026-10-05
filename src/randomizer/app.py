@@ -3,9 +3,6 @@ import random
 import json
 import datetime
 import asyncio
-import numpy as np
-from PIL import Image, ImageEnhance, ImageOps
-import piexif
 
 import toga
 from toga.style import Pack
@@ -96,7 +93,7 @@ class iPhoneImageProcessorApp(toga.App):
         except Exception as e:
             self.label_input.text = f"Erreur de sélection"
 
-    # --- LOGIQUE MÉTIER (Adaptée de votre script) ---
+    # --- LOGIQUE MÉTIER ---
     IPHONE_MODELS = [
         {"make": "Apple", "model": "iPhone 11", "software": "16.5", "focal": (26, 1), "fnum": (18, 10)},
         {"make": "Apple", "model": "iPhone 12", "software": "17.1.1", "focal": (26, 1), "fnum": (16, 10)},
@@ -132,6 +129,7 @@ class iPhoneImageProcessorApp(toga.App):
                 return f"IMG_{rand_num}.jpg"
 
     def generate_iphone_exif(self):
+        import piexif  # Import différé
         device = random.choice(self.IPHONE_MODELS)
         now = datetime.datetime.now()
         random_days = random.randint(1, 30)
@@ -167,6 +165,8 @@ class iPhoneImageProcessorApp(toga.App):
         return piexif.dump(exif_dict)
 
     def add_gaussian_noise_and_steganography(self, img, magnitude=2.5):
+        import numpy as np  # Import différé
+        from PIL import Image
         img_array = np.array(img).astype(np.int16)
         noise = np.random.normal(0, magnitude, img_array.shape)
         img_array = img_array + noise
@@ -196,6 +196,7 @@ class iPhoneImageProcessorApp(toga.App):
         return img.crop((left, top, left + new_w, top + new_h))
 
     def process_single_image(self, img, output_path, target_width=1080):
+        from PIL import Image, ImageEnhance  # Import différé
         if random.random() < 0.15:
             img = ImageOps.mirror(img)
 
@@ -231,13 +232,13 @@ class iPhoneImageProcessorApp(toga.App):
         num_folders = int(self.num_folders_input.value)
         output_base_folder = os.path.join(str(self.paths.documents), "photos_traitees")
         
-        # Exécution en tâche de fond pour ne pas bloquer l'UI
         await asyncio.to_thread(self.run_processing_logic, self.input_folder, output_base_folder, num_folders)
         
         self.btn_run.enabled = True
         self.btn_input.enabled = True
 
     def run_processing_logic(self, input_folder, output_base_folder, num_folders):
+        from PIL import Image, ImageOps  # Import différé
         valid_extensions = ('.jpg', '.jpeg', '.png', '.webp', '.heic')
         input_files = [f for f in os.listdir(input_folder) if f.lower().endswith(valid_extensions)]
         
