@@ -29,11 +29,9 @@ jobs:
 
     - name: Package as .ipa
       run: |
-        # Crée un dossier Payload requis pour les .ipa
         mkdir -p Payload
-        # Déplace l'application compilée par Xcode dans Payload
-        cp -R randomizer/ios/xcode/build/Release-iphoneos/*.app Payload/
-        # Compresse le tout en un fichier .ipa nommé Randomizer.ipa
+        # Trouve et copie automatiquement le fichier .app généré peu importe son nom
+        find . -name "*.app" -exec cp -R {} Payload/ \;
         zip -r Randomizer.ipa Payload
         
     - name: Upload Artifact
