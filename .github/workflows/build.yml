@@ -21,11 +21,11 @@ jobs:
         pip install --upgrade pip
         pip install briefcase
 
-    - name: Create iOS App Package
-      run: briefcase create iOS --no-input
+    - name: Create & Update iOS App Package (Force clean)
+      run: briefcase create ios --update --force --no-input
 
     - name: Build iOS App
-      run: briefcase build iOS --no-input
+      run: briefcase build ios --no-input
 
     - name: Package as .ipa
       run: |
