@@ -1,20 +1,20 @@
 [tool.briefcase]
-project_name = "iPhone Processor"
+project_name = "Randomizer CAMARA"
 bundle = "org.example"
 version = "0.1.0"
 license = "MIT"
 author = "Marc Eddy Camara"
 
 [tool.briefcase.app.randomizer]
-formal_name = "iPhone Processor"
+formal_name = "Randomizer CAMARA"
 description = "Traitement EXIF et bruit iPhone"
 icon = "src/randomizer/resources/randomizer"
 sources = [
     "src/randomizer"
 ]
 requires = [
-    "toga>=0.3.0",
-    "numpy>=1.20.0",
+    "toga-iOS>=0.4.0",
+    "numpy>=1.22.0",
     "pillow>=9.0.0",
     "piexif>=1.1.3"
 ]
@@ -22,7 +22,8 @@ test_requires = [
     "pytest",
 ]
 
-[tool.briefcase.app.randomizer.iOS]
+[tool.briefcase.app.randomizer.ios]
+minimum_version = "14.0"
 supported_platforms = [
     "iphoneos"
 ]
